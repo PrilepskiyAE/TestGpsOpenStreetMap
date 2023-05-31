@@ -1,29 +1,65 @@
 package com.prilepskiy.trenninggpsopenstreetmap.fragment
 
+import android.graphics.Color
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceChangeListener
+import androidx.preference.PreferenceFragmentCompat
 import com.prilepskiy.trenninggpsopenstreetmap.R
-import com.prilepskiy.trenninggpsopenstreetmap.databinding.ActivityMainBinding
-import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentMainBinding
-import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentSettingsBinding
+import com.prilepskiy.trenninggpsopenstreetmap.utils.showToast
 
+class SettingsFragment : PreferenceFragmentCompat() {
+    private lateinit var timePref: Preference
+    private lateinit var colorPref: Preference
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.main_preference, rootKey)
+        init()
 
-class SettingsFragment : Fragment() {
-    lateinit var binding: FragmentSettingsBinding
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        // Inflate the layout for this fragment
-        binding = FragmentSettingsBinding.inflate(inflater)
-            return binding.root
     }
 
-    companion object {
+    private fun init() {
+        timePref = findPreference("update_time_key")!!
+        colorPref = findPreference("color_key")!!
+        val changeListener = onChangeListener()
+        timePref.onPreferenceChangeListener = changeListener
+        colorPref.onPreferenceChangeListener = changeListener
+        initPref()
+    }
 
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) = SettingsFragment()}
+    private fun onChangeListener(): Preference.OnPreferenceChangeListener {
+        return Preference.OnPreferenceChangeListener { pref, value ->
+            when (pref.key) {
+                "update_time_key" -> {
+                    onTimeChange(value.toString())
+                }
+
+                "color_key" -> {
+                    pref.icon?.setTint(Color.parseColor(value.toString()))
+                }
+            }
+
+            true
+        }
+
+    }
+
+    private fun onTimeChange(value: String) {
+        val nameArray = resources.getStringArray(R.array.loc_time_update_name)
+        val valueArray = resources.getStringArray(R.array.loc_time_update_value)
+        val title = timePref.title.toString().substringBefore(":")
+        timePref.title = "$title : ${nameArray[valueArray.indexOf(value)]}"
+    }
+
+    private fun initPref() {
+        val pref = timePref.preferenceManager.sharedPreferences
+        val nameArray = resources.getStringArray(R.array.loc_time_update_name)
+        val valueArray = resources.getStringArray(R.array.loc_time_update_value)
+        val title = timePref.title
+        timePref.title =
+            "$title : ${nameArray[valueArray.indexOf(pref?.getString("update_time_key", "3000"))]}"
+
+        colorPref.icon?.setTint(Color.parseColor(pref?.getString("color_key", "#FF0091EA")))
+    }
+
+
 }

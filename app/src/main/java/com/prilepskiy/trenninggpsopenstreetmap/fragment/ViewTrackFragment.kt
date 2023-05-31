@@ -25,5 +25,5 @@ class ViewTrackFragment : Fragment() {
     companion object {
 
         @JvmStatic
-        fun newInstance(param1: String, param2: String) = ViewTrackFragment()}
+        fun newInstance() = ViewTrackFragment()}
 }
