@@ -1,19 +1,33 @@
 package com.prilepskiy.trenninggpsopenstreetmap.location
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import com.google.android.gms.location.CurrentLocationRequest
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import com.prilepskiy.trenninggpsopenstreetmap.MainActivity
 import com.prilepskiy.trenninggpsopenstreetmap.R
 
 class LocationService : Service() {
+    private lateinit var locProvider:FusedLocationProviderClient
+    private lateinit var locationRequest: LocationRequest
+
     override fun onBind(p0: Intent?): IBinder? {
         return null
     }
@@ -22,7 +36,7 @@ class LocationService : Service() {
 
 
         startNotification()
-
+        startLocationUpdates()
 
         return START_STICKY
     }
@@ -31,15 +45,24 @@ class LocationService : Service() {
         Log.d("TAG", "onCreate: Location Service start ")
         super.onCreate()
         isRunning=true
+        initLocation()
     }
 
     override fun onDestroy() {
         Log.d("TAG", "onCreate: Location Service stop ")
         isRunning=false
+        locProvider.removeLocationUpdates(locCallback)
         super.onDestroy()
 
     }
 
+    private var locCallback=object :LocationCallback(){
+        override fun onLocationResult(p0: LocationResult) {
+            super.onLocationResult(p0)
+           // p0.lastLocation
+            Log.d("TAG", "onLocationResult:$p0 ")
+        }
+    }
     private fun startNotification() {
 
         val nIntent=Intent(this,MainActivity::class.java)
@@ -64,6 +87,23 @@ class LocationService : Service() {
 
         startForeground(99,notification)
 
+    }
+    private fun initLocation(){
+        locationRequest=LocationRequest.create()
+        locationRequest.interval=5000
+        locationRequest.fastestInterval=5000
+        locationRequest.priority= PRIORITY_HIGH_ACCURACY
+        locProvider= LocationServices.getFusedLocationProviderClient(baseContext)
+    }
+    private fun startLocationUpdates(){
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+        }
+        locProvider.requestLocationUpdates(locationRequest,locCallback, Looper.myLooper())
     }
 
     companion object {

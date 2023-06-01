@@ -66,6 +66,7 @@ class MainFragment : Fragment() {
         } else {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_start)
+            timer?.cancel()
         }
         isServiceRunning = !isServiceRunning
     }
@@ -124,9 +125,10 @@ timeData.observe(viewLifecycleOwner){
     private fun startLocService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             activity?.startForegroundService(Intent(activity, LocationService::class.java))
+
         } else {
             activity?.startService(Intent(activity, LocationService::class.java))
-            timer?.cancel()
+
         }
         binding.fStartStop.setImageResource(R.drawable.baseline_stop_circle_24)
         LocationService.startTime=System.currentTimeMillis()
