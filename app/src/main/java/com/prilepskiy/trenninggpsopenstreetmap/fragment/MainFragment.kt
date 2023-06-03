@@ -1,8 +1,10 @@
 package com.prilepskiy.trenninggpsopenstreetmap.fragment
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.location.LocationManager
 import android.media.audiofx.Equalizer.Settings
 import android.os.Build
@@ -17,9 +19,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.gms.location.LocationServices
 import com.prilepskiy.trenninggpsopenstreetmap.R
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.ActivityMainBinding
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentMainBinding
+import com.prilepskiy.trenninggpsopenstreetmap.location.LocationModel
 import com.prilepskiy.trenninggpsopenstreetmap.location.LocationService
 import com.prilepskiy.trenninggpsopenstreetmap.utils.DialogManager
 import com.prilepskiy.trenninggpsopenstreetmap.utils.TimerUtils
@@ -39,8 +44,8 @@ class MainFragment : Fragment() {
     private var timer: Timer? = null
     private var startTime=0L
     private val timeData=MutableLiveData<String>()
-    lateinit var binding: FragmentMainBinding
-    lateinit var pLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var binding: FragmentMainBinding
+    private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -58,6 +63,7 @@ class MainFragment : Fragment() {
         setOnClick()
         checkServiceState()
         updateTime()
+        registerLocResiver()
     }
 
     private fun startStopService() {
@@ -231,7 +237,21 @@ timeData.observe(viewLifecycleOwner){
                 })
         }
     }
+    private val receiver = object : BroadcastReceiver(){
+        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+        override fun onReceive(p0: Context?, p1: Intent?) {
+           if (p1?.action==LocationService.LOCMODEL_INTENT){
+            val locationModel =  p1.getSerializableExtra(LocationService.LOCMODEL_INTENT, LocationModel::class.java)
+               Log.d("TAG", "onReceive: $locationModel")
+           }
+        }
+    }
 
+    private fun registerLocResiver(){
+        val locFilter=IntentFilter(LocationService.LOCMODEL_INTENT)
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity).registerReceiver(receiver,locFilter)
+        receiver
+    }
     companion object {
 
         @JvmStatic
