@@ -18,6 +18,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
@@ -42,10 +43,11 @@ import java.util.TimerTask
 class MainFragment : Fragment() {
     private var isServiceRunning = false
     private var timer: Timer? = null
-    private var startTime=0L
-    private val timeData=MutableLiveData<String>()
+    private var startTime = 0L
+
     private lateinit var binding: FragmentMainBinding
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
+    private val model: MainViewModel by activityViewModels()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -64,6 +66,7 @@ class MainFragment : Fragment() {
         checkServiceState()
         updateTime()
         registerLocResiver()
+        locationUpdate()
     }
 
     private fun startStopService() {
@@ -103,29 +106,38 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun updateTime(){
-timeData.observe(viewLifecycleOwner){
+    private fun updateTime() {
+        model.timeData.observe(viewLifecycleOwner) {
 //binding.tvTime.text=TimerUtils.getTime(it.toLong())
-    binding.tvTime.text=it
-}
+            binding.tvTime.text = it
+        }
+    }
+    private fun locationUpdate(){
+        model.locationUpdate.observe(viewLifecycleOwner){
+            val distance="Distance: ${String.format("%.1f",it.distance)} m"
+            val velocity="Velocity ${String.format("%.1f",3.6 * it.velocity)} km/h"
+            binding.tvDistance.text=distance
+            binding.tvVelocity.text=velocity
+
+        }
     }
 
-    private fun startTimer(){
+    private fun startTimer() {
         timer?.cancel()
-        timer= Timer()
-        startTime=LocationService.startTime
-        timer?.schedule(object :TimerTask(){
+        timer = Timer()
+        startTime = LocationService.startTime
+        timer?.schedule(object : TimerTask() {
             override fun run() {
                 activity?.runOnUiThread {
-                    timeData.value=getCurrentTime()
+                    model.timeData.value = getCurrentTime()
                 }
             }
 
-        },1000,1000)
+        }, 1000, 1000)
     }
 
-    private fun getCurrentTime():String{
-        return "Time: ${TimerUtils.getTime(System.currentTimeMillis()-startTime)}"
+    private fun getCurrentTime(): String {
+        return "Time: ${TimerUtils.getTime(System.currentTimeMillis() - startTime)}"
     }
 
     private fun startLocService() {
@@ -137,7 +149,7 @@ timeData.observe(viewLifecycleOwner){
 
         }
         binding.fStartStop.setImageResource(R.drawable.baseline_stop_circle_24)
-        LocationService.startTime=System.currentTimeMillis()
+        LocationService.startTime = System.currentTimeMillis()
         startTimer()
 
     }
@@ -237,21 +249,32 @@ timeData.observe(viewLifecycleOwner){
                 })
         }
     }
-    private val receiver = object : BroadcastReceiver(){
+
+    private val receiver = object : BroadcastReceiver() {
         @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         override fun onReceive(p0: Context?, p1: Intent?) {
-           if (p1?.action==LocationService.LOCMODEL_INTENT){
-            val locationModel =  p1.getSerializableExtra(LocationService.LOCMODEL_INTENT, LocationModel::class.java)
-               Log.d("TAG", "onReceive: $locationModel")
-           }
+            if (p1?.action == LocationService.LOCMODEL_INTENT) {
+                val locationModel = p1.getSerializableExtra(
+                    LocationService.LOCMODEL_INTENT,
+                    LocationModel::class.java
+                )
+                Log.d("TAG", "onReceive: $locationModel")
+                model.locationUpdate.value=locationModel
+            }
         }
     }
 
-    private fun registerLocResiver(){
-        val locFilter=IntentFilter(LocationService.LOCMODEL_INTENT)
-        LocalBroadcastManager.getInstance(activity as AppCompatActivity).registerReceiver(receiver,locFilter)
-        receiver
+    private fun registerLocResiver() {
+        val locFilter = IntentFilter(LocationService.LOCMODEL_INTENT)
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity)
+            .registerReceiver(receiver, locFilter)
+
     }
+
+    private fun getAverageSpeed(dis:Float){
+
+    }
+
     companion object {
 
         @JvmStatic
