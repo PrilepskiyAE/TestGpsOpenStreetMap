@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.location.LocationManager
 import android.media.audiofx.Equalizer.Settings
 import android.os.Build
@@ -34,6 +35,7 @@ import com.prilepskiy.trenninggpsopenstreetmap.utils.showToast
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.Timer
@@ -42,9 +44,10 @@ import java.util.TimerTask
 
 class MainFragment : Fragment() {
     private var isServiceRunning = false
+    private var firstStart=true
     private var timer: Timer? = null
     private var startTime = 0L
-
+    private var pl:Polyline?=null
     private lateinit var binding: FragmentMainBinding
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
     private val model: MainViewModel by activityViewModels()
@@ -120,6 +123,7 @@ class MainFragment : Fragment() {
             binding.tvDistance.text=distance
             binding.tvVelocity.text=velocity
             binding.tvAverageVel.text=aVelocity
+            updatePolyline(it.geoPointList)
 
         }
     }
@@ -173,6 +177,8 @@ class MainFragment : Fragment() {
 
     private fun initOSM() {
         checkLocationEnabled()
+        pl= Polyline()
+        pl?.outlinePaint?.color = Color.BLUE
         binding.map.controller.setZoom(20.0)
         binding.map.controller.animateTo(GeoPoint(40.4167, -3.70325))
         val mLocationProvider = GpsMyLocationProvider(activity)
@@ -182,6 +188,7 @@ class MainFragment : Fragment() {
         mLpcOverlay.runOnFirstFix {
             binding.map.overlays.clear()
             binding.map.overlays.add(mLpcOverlay)
+            binding.map.overlays.add(pl)
         }
     }
 
@@ -275,6 +282,31 @@ class MainFragment : Fragment() {
 
     private fun getAverageSpeed(dis:Float):String{
         return String.format("%.1f",(dis/((System.currentTimeMillis()-startTime)/1000.0f)))
+    }
+
+    private fun addPoint(list: List<GeoPoint>){
+        pl?.addPoint(list[list.size-1])
+    }
+
+   private fun fillPolyline(list: List<GeoPoint>){
+       list.forEach {
+           pl?.addPoint(it)
+       }
+   }
+
+    private fun updatePolyline(list: List<GeoPoint>){
+        if (list.size>1 && firstStart){
+            fillPolyline(list)
+            firstStart=false
+        } else{
+            addPoint(list)
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        LocalBroadcastManager.getInstance(activity as AppCompatActivity)
+            .unregisterReceiver(receiver)
     }
 
     companion object {
