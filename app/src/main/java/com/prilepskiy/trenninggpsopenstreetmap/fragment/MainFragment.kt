@@ -116,8 +116,10 @@ class MainFragment : Fragment() {
         model.locationUpdate.observe(viewLifecycleOwner){
             val distance="Distance: ${String.format("%.1f",it.distance)} m"
             val velocity="Velocity ${String.format("%.1f",3.6 * it.velocity)} km/h"
+            val aVelocity="Average velocity ${getAverageSpeed(it.distance)} km/h"
             binding.tvDistance.text=distance
             binding.tvVelocity.text=velocity
+            binding.tvAverageVel.text=aVelocity
 
         }
     }
@@ -271,8 +273,8 @@ class MainFragment : Fragment() {
 
     }
 
-    private fun getAverageSpeed(dis:Float){
-
+    private fun getAverageSpeed(dis:Float):String{
+        return String.format("%.1f",(dis/((System.currentTimeMillis()-startTime)/1000.0f)))
     }
 
     companion object {
