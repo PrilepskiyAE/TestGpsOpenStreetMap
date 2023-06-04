@@ -26,6 +26,7 @@ import com.google.android.gms.location.LocationServices
 import com.prilepskiy.trenninggpsopenstreetmap.R
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.ActivityMainBinding
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentMainBinding
+import com.prilepskiy.trenninggpsopenstreetmap.db.TrackItem
 import com.prilepskiy.trenninggpsopenstreetmap.location.LocationModel
 import com.prilepskiy.trenninggpsopenstreetmap.location.LocationService
 import com.prilepskiy.trenninggpsopenstreetmap.utils.DialogManager
@@ -43,6 +44,7 @@ import java.util.TimerTask
 
 
 class MainFragment : Fragment() {
+    private var locationModel: LocationModel?=null
     private var isServiceRunning = false
     private var firstStart=true
     private var timer: Timer? = null
@@ -79,11 +81,22 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_start)
             timer?.cancel()
+            DialogManager.showSaveDialog(requireContext(),getTrackItem(),object :DialogManager.Listener {
+                override fun onClick() {
+                    showToast("Saved")
+                }
+
+            } )
         }
         isServiceRunning = !isServiceRunning
     }
 
+private fun getTrackItem():TrackItem{
+   return TrackItem(null,getCurrentTime(),TimerUtils.getDate(),String.format("%.1f", locationModel?.distance?.div(1000)),
+        getAverageSpeed(locationModel?.distance?:0.0f),geoPointToString(locationModel?.geoPointList?: arrayListOf())
 
+    )
+}
     private fun checkServiceState() {
         isServiceRunning = LocationService.isRunning
         if (isServiceRunning) {
@@ -123,6 +136,7 @@ class MainFragment : Fragment() {
             binding.tvDistance.text=distance
             binding.tvVelocity.text=velocity
             binding.tvAverageVel.text=aVelocity
+           locationModel=it
             updatePolyline(it.geoPointList)
 
         }
@@ -307,6 +321,15 @@ class MainFragment : Fragment() {
         super.onDetach()
         LocalBroadcastManager.getInstance(activity as AppCompatActivity)
             .unregisterReceiver(receiver)
+    }
+
+
+    private fun geoPointToString(list: List<GeoPoint>):String{
+       val sb=StringBuilder()
+        list.forEach {
+            sb.append("${it.latitude},${it.longitude}/")
+        }
+        return sb.toString()
     }
 
     companion object {
