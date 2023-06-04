@@ -20,11 +20,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.MutableLiveData
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.google.android.gms.location.LocationServices
+
+import com.prilepskiy.trenninggpsopenstreetmap.MainApp
 import com.prilepskiy.trenninggpsopenstreetmap.R
-import com.prilepskiy.trenninggpsopenstreetmap.databinding.ActivityMainBinding
+
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentMainBinding
 import com.prilepskiy.trenninggpsopenstreetmap.db.TrackItem
 import com.prilepskiy.trenninggpsopenstreetmap.location.LocationModel
@@ -52,7 +53,9 @@ class MainFragment : Fragment() {
     private var pl:Polyline?=null
     private lateinit var binding: FragmentMainBinding
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
-    private val model: MainViewModel by activityViewModels()
+    private val model: MainViewModel by activityViewModels {
+        MainViewModel.ViewModelFactory((requireContext().applicationContext as MainApp).database)
+    }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -72,6 +75,9 @@ class MainFragment : Fragment() {
         updateTime()
         registerLocResiver()
         locationUpdate()
+        model.tracks.observe(viewLifecycleOwner){
+            Log.d("TAG99", "onViewCreated: ${it.size}")
+        }
     }
 
     private fun startStopService() {
@@ -81,9 +87,11 @@ class MainFragment : Fragment() {
             activity?.stopService(Intent(activity, LocationService::class.java))
             binding.fStartStop.setImageResource(R.drawable.ic_start)
             timer?.cancel()
-            DialogManager.showSaveDialog(requireContext(),getTrackItem(),object :DialogManager.Listener {
+            val track=getTrackItem()
+            DialogManager.showSaveDialog(requireContext(),track,object :DialogManager.Listener {
                 override fun onClick() {
                     showToast("Saved")
+                    model.insertTrack(track)
                 }
 
             } )

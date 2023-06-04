@@ -13,13 +13,13 @@ import com.prilepskiy.trenninggpsopenstreetmap.databinding.ViewTracksBinding
 
 
 class TrackFragment : Fragment() {
-    lateinit var binding: FragmentViewTrackBinding
+    lateinit var binding: ViewTracksBinding
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
-        binding = FragmentViewTrackBinding.inflate(inflater)
+        binding = ViewTracksBinding.inflate(inflater)
             return binding.root
     }
 
