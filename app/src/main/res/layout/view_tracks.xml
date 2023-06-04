@@ -3,15 +3,71 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".fragment.TrackFragment">
 
-    <TextView
-        android:id="@+id/textView2"
+    <org.osmdroid.views.MapView
+        android:id="@+id/map"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TextView"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/tvTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:background="#995EBC6E"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:text="Time: 00:00:00"
+        android:textColor="#000000"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvAverageVel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="#995EBC6E"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:text="Averag velocity: 3,5 km/h"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/tvTime"
+        app:layout_constraintTop_toBottomOf="@+id/tvTime" />
+
+    <TextView
+        android:id="@+id/tvData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="#995EBC6E"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:text="12/12/2023 12:12"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/tvAverageVel"
+        app:layout_constraintTop_toBottomOf="@+id/tvAverageVel" />
+
+    <TextView
+        android:id="@+id/tvDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="#995EBC6E"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:text="Distance: 16.5 km"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/tvData"
+        app:layout_constraintTop_toBottomOf="@+id/tvData" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

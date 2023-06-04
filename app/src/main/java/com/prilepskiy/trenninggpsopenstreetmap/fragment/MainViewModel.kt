@@ -15,10 +15,16 @@ class MainViewModel(db:MainDb):ViewModel() {
     val timeData=MutableLiveData<String>()
     val dao=db.getDao()
     val tracks=dao.getAllTrack().asLiveData()
-
+    val currentTrack=MutableLiveData<TrackItem>()
     fun insertTrack(trackItem: TrackItem){
         viewModelScope.launch {
             dao.insertTrack(trackItem)
+        }
+    }
+
+    fun deleteTrack(trackItem: TrackItem){
+        viewModelScope.launch {
+            dao.deleteTrack(trackItem)
         }
     }
 

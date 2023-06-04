@@ -75,9 +75,7 @@ class MainFragment : Fragment() {
         updateTime()
         registerLocResiver()
         locationUpdate()
-        model.tracks.observe(viewLifecycleOwner){
-            Log.d("TAG99", "onViewCreated: ${it.size}")
-        }
+
     }
 
     private fun startStopService() {
@@ -88,6 +86,7 @@ class MainFragment : Fragment() {
             binding.fStartStop.setImageResource(R.drawable.ic_start)
             timer?.cancel()
             val track=getTrackItem()
+            Log.d("TAG11", "startStopService: $track")
             DialogManager.showSaveDialog(requireContext(),track,object :DialogManager.Listener {
                 override fun onClick() {
                     showToast("Saved")
@@ -100,10 +99,15 @@ class MainFragment : Fragment() {
     }
 
 private fun getTrackItem():TrackItem{
-   return TrackItem(null,getCurrentTime(),TimerUtils.getDate(),String.format("%.1f", locationModel?.distance?.div(1000)),
-        getAverageSpeed(locationModel?.distance?:0.0f),geoPointToString(locationModel?.geoPointList?: arrayListOf())
+    val tempTrack = TrackItem(null,getCurrentTime(),
+        TimerUtils.getDate(),
+        String.format("%.1f", locationModel?.distance!!/1000.0),
 
-    )
+        getAverageSpeed(locationModel?.distance?:0.0f),geoPointToString(locationModel?.geoPointList?: arrayListOf()))
+
+   return tempTrack
+
+
 }
     private fun checkServiceState() {
         isServiceRunning = LocationService.isRunning
