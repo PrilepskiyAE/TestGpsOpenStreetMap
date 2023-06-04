@@ -8,17 +8,18 @@ import android.view.ViewGroup
 import com.prilepskiy.trenninggpsopenstreetmap.R
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.ActivityMainBinding
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentMainBinding
+import com.prilepskiy.trenninggpsopenstreetmap.databinding.FragmentViewTrackBinding
 import com.prilepskiy.trenninggpsopenstreetmap.databinding.ViewTracksBinding
 
 
 class ViewTrackFragment : Fragment() {
-    lateinit var binding: ViewTracksBinding
+    lateinit var binding: FragmentViewTrackBinding
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
-        binding = ViewTracksBinding.inflate(inflater)
+        binding = FragmentViewTrackBinding.inflate(inflater)
             return binding.root
     }
 
