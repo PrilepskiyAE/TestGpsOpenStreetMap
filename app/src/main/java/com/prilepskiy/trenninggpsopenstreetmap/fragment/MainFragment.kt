@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.activityViewModels
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
 
 import com.prilepskiy.trenninggpsopenstreetmap.MainApp
 import com.prilepskiy.trenninggpsopenstreetmap.R
@@ -48,6 +49,7 @@ class MainFragment : Fragment() {
     private var locationModel: LocationModel?=null
     private var isServiceRunning = false
     private var firstStart=true
+    private lateinit var  mLpcOverlay:MyLocationNewOverlay
     private var timer: Timer? = null
     private var startTime = 0L
     private var pl:Polyline?=null
@@ -75,9 +77,7 @@ class MainFragment : Fragment() {
         updateTime()
         registerLocResiver()
         locationUpdate()
-        model.tracks.observe(viewLifecycleOwner){
-            Log.d("TAG99", "onViewCreated: ${it.size}")
-        }
+
     }
 
     private fun startStopService() {
@@ -88,6 +88,7 @@ class MainFragment : Fragment() {
             binding.fStartStop.setImageResource(R.drawable.ic_start)
             timer?.cancel()
             val track=getTrackItem()
+
             DialogManager.showSaveDialog(requireContext(),track,object :DialogManager.Listener {
                 override fun onClick() {
                     showToast("Saved")
@@ -100,10 +101,17 @@ class MainFragment : Fragment() {
     }
 
 private fun getTrackItem():TrackItem{
-   return TrackItem(null,getCurrentTime(),TimerUtils.getDate(),String.format("%.1f", locationModel?.distance?.div(1000)),
-        getAverageSpeed(locationModel?.distance?:0.0f),geoPointToString(locationModel?.geoPointList?: arrayListOf())
+    val tempTrack = TrackItem(id=null,getCurrentTime(),
+        date = TimerUtils.getDate(),
+      distance=  String.format("%.1f",locationModel?.distance),
 
-    )
+       velocity =  getAverageSpeed(locationModel?.distance?:0.0f),
+        geoPoint = geoPointToString(locationModel?.geoPointList?: arrayListOf()))
+
+    Log.d("TAG99", "getTrackItem: $locationModel,| $tempTrack")
+   return tempTrack
+
+
 }
     private fun checkServiceState() {
         isServiceRunning = LocationService.isRunning
@@ -118,6 +126,7 @@ private fun getTrackItem():TrackItem{
     private fun setOnClick() {
         val listener = onClick()
         binding.fStartStop.setOnClickListener(listener)
+        binding.fcenter.setOnClickListener(listener)
     }
 
     private fun onClick(): View.OnClickListener {
@@ -126,8 +135,16 @@ private fun getTrackItem():TrackItem{
                 R.id.fStartStop -> {
                     startStopService()
                 }
+                R.id.fcenter->{
+                    centerLocation()
+                }
             }
         }
+    }
+
+    private fun centerLocation(){
+        binding.map.controller.animateTo(mLpcOverlay.myLocation)
+        mLpcOverlay.enableFollowLocation()
     }
 
     private fun updateTime() {
@@ -138,6 +155,7 @@ private fun getTrackItem():TrackItem{
     }
     private fun locationUpdate(){
         model.locationUpdate.observe(viewLifecycleOwner){
+
             val distance="Distance: ${String.format("%.1f",it.distance)} m"
             val velocity="Velocity ${String.format("%.1f",3.6 * it.velocity)} km/h"
             val aVelocity="Average velocity ${getAverageSpeed(it.distance)} km/h"
@@ -185,6 +203,7 @@ private fun getTrackItem():TrackItem{
     override fun onResume() {
         super.onResume()
         checkLocPermission()
+        firstStart=true
     }
 
     private fun settingsOsm() {
@@ -200,17 +219,19 @@ private fun getTrackItem():TrackItem{
     private fun initOSM() {
         checkLocationEnabled()
         pl= Polyline()
-        pl?.outlinePaint?.color = Color.BLUE
+        pl?.outlinePaint?.color=Color.parseColor(PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("color_key","#FF0091EA"))
+
         binding.map.controller.setZoom(20.0)
         binding.map.controller.animateTo(GeoPoint(40.4167, -3.70325))
         val mLocationProvider = GpsMyLocationProvider(activity)
-        val mLpcOverlay = MyLocationNewOverlay(mLocationProvider, binding.map)
+        mLpcOverlay = MyLocationNewOverlay(mLocationProvider, binding.map)
         mLpcOverlay.enableMyLocation()
         mLpcOverlay.enableFollowLocation()
         mLpcOverlay.runOnFirstFix {
             binding.map.overlays.clear()
-            binding.map.overlays.add(mLpcOverlay)
             binding.map.overlays.add(pl)
+            binding.map.overlays.add(mLpcOverlay)
+
         }
     }
 
@@ -227,9 +248,9 @@ private fun getTrackItem():TrackItem{
     }
 
     private fun checkLocPermission() {
-        Log.d("TAG", "checkLocPermission:0 ")
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Log.d("TAG", "checkLocPermission: 1")
+
             checkPermission10()
         } else {
             checkPermission()
@@ -242,10 +263,10 @@ private fun getTrackItem():TrackItem{
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             )
         ) {
-            Log.d("TAG", "checkLocPermission: 3")
+
             initOSM()
         } else {
-            Log.d("TAG", "checkLocPermission: 4")
+
             pLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -289,7 +310,7 @@ private fun getTrackItem():TrackItem{
                     LocationService.LOCMODEL_INTENT,
                     LocationModel::class.java
                 )
-                Log.d("TAG", "onReceive: $locationModel")
+
                 model.locationUpdate.value=locationModel
             }
         }
@@ -307,6 +328,7 @@ private fun getTrackItem():TrackItem{
     }
 
     private fun addPoint(list: List<GeoPoint>){
+        if (list.isNotEmpty())
         pl?.addPoint(list[list.size-1])
     }
 
