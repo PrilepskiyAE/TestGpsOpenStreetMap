@@ -14,7 +14,9 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -65,7 +67,7 @@ class LocationService : Service() {
             // p0.lastLocation
             val currentLocation = p0.lastLocation
             if (lastlocation != null && currentLocation != null) {
-                //if (currentLocation.speed  > 0.28f)
+                if (currentLocation.speed  > 0.28f){
 
                 distance += lastlocation?.distanceTo(currentLocation)!!
                 geopointList.add(GeoPoint(currentLocation.latitude, currentLocation.longitude))
@@ -73,6 +75,7 @@ class LocationService : Service() {
                     currentLocation.speed, distance, geopointList
                 )
                 sendLocData(locModel)
+            }
             }
             lastlocation = currentLocation
             Log.d("TAG", "onLocationResult:$distance ")
@@ -115,8 +118,10 @@ class LocationService : Service() {
 
     private fun initLocation() {
         locationRequest = LocationRequest.create()
-        locationRequest.interval = 5000
-        locationRequest.fastestInterval = 5000
+        locationRequest.interval =
+            PreferenceManager.getDefaultSharedPreferences(applicationContext).getString("update_time_key","3000")?.toLong()!!
+        locationRequest.fastestInterval =
+            PreferenceManager.getDefaultSharedPreferences(applicationContext).getString("update_time_key","3000")?.toLong()!!
         locationRequest.priority = PRIORITY_HIGH_ACCURACY
         locProvider = LocationServices.getFusedLocationProviderClient(baseContext)
     }

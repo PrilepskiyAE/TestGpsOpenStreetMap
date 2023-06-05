@@ -2,6 +2,7 @@ package com.prilepskiy.trenninggpsopenstreetmap.fragment
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.activityViewModels
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.prilepskiy.trenninggpsopenstreetmap.MainApp
 import com.prilepskiy.trenninggpsopenstreetmap.R
@@ -22,6 +24,7 @@ import com.prilepskiy.trenninggpsopenstreetmap.db.TrackItem
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 
 
@@ -47,6 +50,7 @@ class TrackFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         getTrack()
+
     }
 
     private fun getTrack(){
@@ -58,7 +62,13 @@ class TrackFragment : Fragment() {
                 tvTime.text="Time: ${it.time}"
                 val polyline=getPolyline(it.geoPoint)
                 map.overlays.add(polyline)
+                setMarkers(polyline.actualPoints)
                 goToStartPosition(polyline.actualPoints[0])
+
+                fcenter.setOnClickListener {
+                    if (polyline.actualPoints[0]!=null)
+                    binding.map.controller.animateTo(polyline.actualPoints[0])
+                }
             }
         }
     }
@@ -69,6 +79,9 @@ class TrackFragment : Fragment() {
     }
     private fun getPolyline(geoPoint: String):Polyline{
         val polyline=Polyline()
+
+        polyline.outlinePaint.color=Color.parseColor(PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("color_key","#FF0091EA"))
+
         val list=geoPoint.split("/")
         list.forEach {
             if (it.isEmpty())return@forEach
@@ -78,7 +91,16 @@ class TrackFragment : Fragment() {
 
         return polyline
     }
-
+    private fun setMarkers(list:List<GeoPoint>){
+        val startMarker=Marker(binding.map)
+        val finishMarker=Marker(binding.map)
+        startMarker.setAnchor(Marker.ANCHOR_CENTER,Marker.ANCHOR_BOTTOM)
+        finishMarker.setAnchor(Marker.ANCHOR_CENTER,Marker.ANCHOR_BOTTOM)
+        startMarker.position=list[0]
+        finishMarker.position=list.last()
+        binding.map.overlays.add(startMarker)
+        binding.map.overlays.add(finishMarker)
+    }
     private fun settingsOsm() {
         Configuration.getInstance().load(
             activity as AppCompatActivity, activity?.getSharedPreferences(
